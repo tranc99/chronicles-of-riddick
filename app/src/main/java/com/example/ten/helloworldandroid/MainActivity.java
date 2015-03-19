@@ -20,6 +20,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.JsonHttpResponseHandler;
+
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 
@@ -35,13 +42,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     private static final String PREFS = "prefs";
     private static final String PREF_NAME = "name";
     SharedPreferences mSharedPreferences;
+    private  static final String QUERY_URL = "http://openlibrary.org/search.json?q=";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainTextView = (TextView) findViewById(R.id.main_textview);
-        mainTextView.setText("Set in Java and now you feel the pain!");
         mainButton = (Button) findViewById(R.id.main_button);
         mainButton.setOnClickListener(this);
         mainEditText = (EditText) findViewById(R.id.main_edittext);
@@ -134,17 +141,43 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-
-
-        mainTextView.setText(mainEditText.getText().toString() + " is learning Android development!");
-        mNameList.add(mainEditText.getText().toString());
-        mArrayAdapter.notifyDataSetChanged();
-        setShareIntent();
+        
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         //log the item's position and contents
         Log.d("oh la la android", position + ": " + mNameList.get(position));
+    }
+
+    private void queryBooks(String searchString) {
+        String urlString = "";
+        try {
+            urlString = URLEncoder.encode(searchString, "UTF-8");
+
+        } catch (UnsupportedEncodingException e) {
+            // if this fails for some reason, let the user know why
+            e.printStackTrace();
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get(QUERY_URL + urlString,
+                new JsonHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(JSONObject jsonObject) {
+                        Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
+
+                        Log.d("Boomkaster General", jsonObject.toString());
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
+                        Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(),
+                                Toast.LENGTH_LONG).show();
+
+                        Log.e("Bookmaster General", statusCode + " " + throwable.getMessage());
+                    }
+                });
     }
 }
