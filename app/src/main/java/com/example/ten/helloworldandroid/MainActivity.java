@@ -13,7 +13,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -36,7 +35,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     Button mainButton;
     EditText mainEditText;
     ListView mainListView;
-    ArrayAdapter mArrayAdapter;
+    JSONAdapter mJSONAdapter;
     ArrayList mNameList = new ArrayList();
     ShareActionProvider mShareActionProvider;
     private static final String PREFS = "prefs";
@@ -54,14 +53,15 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         mainEditText = (EditText) findViewById(R.id.main_edittext);
         mainListView = (ListView) findViewById(R.id.main_listview);
 
-        //create an ArrayAdapter for the ListView
-        mArrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, mNameList);
-        // set the ListView to use the ArrayAdapter
-        mainListView.setAdapter(mArrayAdapter);
         mainListView.setOnItemClickListener(this);
 
         // greet the user, or ask for their name if new
         displayWelcome();
+
+        // create a JSONAdapter for the ListView
+        mJSONAdapter = new JSONAdapter(this, getLayoutInflater());
+        // set the ListView to use the ArrayAdapter
+        mainListView.setAdapter(mJSONAdapter);
     }
 
     private void displayWelcome() {
@@ -100,7 +100,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-
+                    // do nothing!
                 }
             });
 
@@ -141,13 +141,12 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        
+        queryBooks(mainEditText.getText().toString());
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        //log the item's position and contents
-        Log.d("oh la la android", position + ": " + mNameList.get(position));
+
     }
 
     private void queryBooks(String searchString) {
@@ -167,8 +166,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     @Override
                     public void onSuccess(JSONObject jsonObject) {
                         Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
-
-                        Log.d("Boomkaster General", jsonObject.toString());
+                        mJSONAdapter.updateData(jsonObject.optJSONArray("docs"));
                     }
 
                     @Override
