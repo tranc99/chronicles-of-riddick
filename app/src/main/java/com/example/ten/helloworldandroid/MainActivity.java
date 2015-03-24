@@ -1,6 +1,7 @@
 package com.example.ten.helloworldandroid;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -37,6 +38,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     ListView mainListView;
     JSONAdapter mJSONAdapter;
     ArrayList mNameList = new ArrayList();
+    ProgressDialog mDialog;
     ShareActionProvider mShareActionProvider;
     private static final String PREFS = "prefs";
     private static final String PREF_NAME = "name";
@@ -62,6 +64,10 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         mJSONAdapter = new JSONAdapter(this, getLayoutInflater());
         // set the ListView to use the ArrayAdapter
         mainListView.setAdapter(mJSONAdapter);
+
+        mDialog = new ProgressDialog(this);
+        mDialog.setMessage("Searching for Book");
+        mDialog.setCancelable(false);
     }
 
     private void displayWelcome() {
@@ -147,6 +153,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+        JSONObject jsonObject = (JSONObject) mJSONAdapter.getItem(position);
+        String coverID = jsonObject.optString("cover_i");
+
+        Intent detailIntent = new Intent(this, DetailActivity.class);
+        detailIntent.putExtra("coverID", coverID);
+        //start the next Activity using the prepared intent
+        startActivity(detailIntent);
     }
 
     private void queryBooks(String searchString) {
@@ -161,16 +174,20 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         }
 
         AsyncHttpClient client = new AsyncHttpClient();
+        // show progress dialog
+        mDialog.show();
         client.get(QUERY_URL + urlString,
                 new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(JSONObject jsonObject) {
+                        mDialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
                         mJSONAdapter.updateData(jsonObject.optJSONArray("docs"));
                     }
 
                     @Override
                     public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
+                        mDialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(),
                                 Toast.LENGTH_LONG).show();
 
